@@ -188,15 +188,6 @@ let ProductListView = class ProductListView {
     }
     ngOnInit() {
     }
-    loadCurrentPicture(imageUrl, index) {
-        return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, function* () {
-            const ref = this.storage.ref(imageUrl);
-            ref.getDownloadURL().subscribe(url => {
-                this.productList[index].picture = url;
-                return url;
-            });
-        });
-    }
 };
 ProductListView.ctorParameters = () => [
     { type: _angular_fire_firestore__WEBPACK_IMPORTED_MODULE_4__["AngularFirestore"] },
@@ -394,6 +385,57 @@ ProfileView = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"])([
 
 /***/ }),
 
+/***/ "GV5D":
+/*!*********************************************************!*\
+  !*** ./src/components/cart-item/cart-item.component.ts ***!
+  \*********************************************************/
+/*! exports provided: CartItemComponent */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CartItemComponent", function() { return CartItemComponent; });
+/* harmony import */ var tslib__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! tslib */ "mrSG");
+/* harmony import */ var _raw_loader_cart_item_component_html__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! raw-loader!./cart-item.component.html */ "rdQJ");
+/* harmony import */ var _cart_item_component_scss__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./cart-item.component.scss */ "PdOq");
+/* harmony import */ var _angular_core__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @angular/core */ "fXoL");
+/* harmony import */ var _services_order_cart_service_service__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../services/order/cart-service.service */ "LD/N");
+
+
+
+
+
+let CartItemComponent = class CartItemComponent {
+    constructor(cartService) {
+        this.cartService = cartService;
+        this.productEvent = new _angular_core__WEBPACK_IMPORTED_MODULE_3__["EventEmitter"]();
+    }
+    ngOnInit() {
+    }
+    removeFromCart() {
+        this.cartService.removeProductOrderFromCart(this.product);
+        this.productEvent.emit({ operation: 'delete', product: this.product });
+    }
+};
+CartItemComponent.ctorParameters = () => [
+    { type: _services_order_cart_service_service__WEBPACK_IMPORTED_MODULE_4__["CartServiceService"] }
+];
+CartItemComponent.propDecorators = {
+    product: [{ type: _angular_core__WEBPACK_IMPORTED_MODULE_3__["Input"] }],
+    productEvent: [{ type: _angular_core__WEBPACK_IMPORTED_MODULE_3__["Output"] }]
+};
+CartItemComponent = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"])([
+    Object(_angular_core__WEBPACK_IMPORTED_MODULE_3__["Component"])({
+        selector: 'app-cart-item',
+        template: _raw_loader_cart_item_component_html__WEBPACK_IMPORTED_MODULE_1__["default"],
+        styles: [_cart_item_component_scss__WEBPACK_IMPORTED_MODULE_2__["default"]]
+    })
+], CartItemComponent);
+
+
+
+/***/ }),
+
 /***/ "IwNu":
 /*!*************************************!*\
   !*** ./src/views/cart/cart.view.ts ***!
@@ -424,7 +466,18 @@ let CartView = class CartView {
     ngOnInit() {
     }
     ionViewDidEnter() {
-        this.productService.loadProductsById(this.cartService.currentCart.getAllIds()).then(value => this.cart = value, reason => console.log(reason));
+        this.loadItemsOfCart();
+    }
+    cartItemEvent(event) {
+        if (event.operation === 'delete') {
+            this.loadItemsOfCart();
+        }
+    }
+    loadItemsOfCart() {
+        this.cart = Array.prototype.concat.apply([], this.cartService.getAllProductOrders());
+        ;
+    }
+    checkout() {
     }
 };
 CartView.ctorParameters = () => [
@@ -507,9 +560,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var tslib__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! tslib */ "mrSG");
 /* harmony import */ var _angular_core__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @angular/core */ "fXoL");
 /* harmony import */ var _models_cart_cart__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../models/cart/cart */ "dDNQ");
-/* harmony import */ var _models_cart_product_order__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../models/cart/product-order */ "UU4C");
-/* harmony import */ var class_transformer__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! class-transformer */ "LGct");
-
+/* harmony import */ var _models_order_order__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../models/order/order */ "ya8d");
 
 
 
@@ -518,40 +569,49 @@ let CartServiceService = class CartServiceService {
     constructor() {
         this.currentCart = new _models_cart_cart__WEBPACK_IMPORTED_MODULE_2__["Cart"]();
     }
-    addProductToCart(productOrderToAdd) {
-        const productIndex = this.findProductInCart(productOrderToAdd.productId);
-        if (productOrderToAdd.productAmount > 0) {
-            if (productIndex >= 0) {
-                this.currentCart.productsOrdered[productIndex].productAmount = productOrderToAdd.productAmount;
-            }
-            else {
-                this.currentCart.addProduct(this.cloneProduct(productOrderToAdd));
+    addProductToCart(productOrder) {
+        const ownerOrder = this.currentCart.ordersList.find(order => order.ownerId === productOrder.productOwnerId);
+        // Recorremos el carrito buscando si este dueño ya tiene un pedido asociado
+        if (ownerOrder) {
+            const currentOrderedItem = ownerOrder.orderedItems.find(orderedItem => orderedItem.productId === productOrder.productId);
+            // Si lo encontramos revisamos si ya tiene ese producto en el carro y actualizamos la cantidad
+            if (!currentOrderedItem) {
+                ownerOrder.orderedItems.push(productOrder);
             }
         }
         else {
-            this.removeProductFromCartById(productOrderToAdd.productId);
+            this.currentCart.ordersList.push(this.generateNewOrderFromProduct(productOrder));
         }
     }
-    removeProductFromCartById(productId) {
-        const productIndex = this.findProductInCart(productId);
-        if (productIndex >= 0) {
-            this.currentCart.productsOrdered.splice(productIndex, 1);
-        }
+    generateNewOrderFromProduct(productOrder) {
+        const newOrderToAdd = new _models_order_order__WEBPACK_IMPORTED_MODULE_3__["Order"]();
+        newOrderToAdd.ownerId = productOrder.productOwnerId;
+        newOrderToAdd.orderedItems.push(productOrder);
+        return newOrderToAdd;
     }
-    findProductInCart(productId) {
-        let index = -1;
-        this.currentCart.productsOrdered.forEach((value, i) => {
-            if (value.productId === productId) {
-                index = i;
+    getAllProductIds() {
+        let allId = [];
+        allId = this.currentCart.ordersList.map(value => value.orderedItems.map(value1 => value1.productId));
+        return allId;
+    }
+    getAllProductOrders() {
+        let allProductOrders = [];
+        allProductOrders = this.currentCart.ordersList.map(value => value.orderedItems);
+        return allProductOrders;
+    }
+    removeProductOrderFromCart(product) {
+        const orderToEdit = this.currentCart.ordersList.find(value => value.orderedItems.find(value1 => value1 === product));
+        console.log(orderToEdit);
+        const productIndex = orderToEdit.orderedItems.indexOf(product);
+        if (productIndex > -1) {
+            orderToEdit.orderedItems.splice(productIndex, 1);
+            if (orderToEdit.orderedItems.length <= 0) {
+                const orderIndex = this.currentCart.ordersList.indexOf(orderToEdit);
+                this.currentCart.ordersList.splice(orderIndex, 1);
             }
-        });
-        return index;
-    }
-    clearCart() {
-        this.currentCart.productsOrdered = [];
-    }
-    cloneProduct(product) {
-        return Object(class_transformer__WEBPACK_IMPORTED_MODULE_4__["plainToClass"])(_models_cart_product_order__WEBPACK_IMPORTED_MODULE_3__["ProductOrder"], Object(class_transformer__WEBPACK_IMPORTED_MODULE_4__["classToPlain"])(product));
+        }
+        console.log(this.currentCart.ordersList);
+        console.log(orderToEdit);
     }
 };
 CartServiceService.ctorParameters = () => [];
@@ -599,6 +659,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _models_product_product__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../../models/product/product */ "rHSd");
 /* harmony import */ var _models_cart_product_order__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../../models/cart/product-order */ "UU4C");
 /* harmony import */ var _services_order_cart_service_service__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../../services/order/cart-service.service */ "LD/N");
+/* harmony import */ var _services_products_product_service__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../../services/products/product.service */ "TYbz");
+
 
 
 
@@ -611,13 +673,14 @@ __webpack_require__.r(__webpack_exports__);
 
 
 let ProductView = class ProductView {
-    constructor(router, route, firestore, afAuth, storage, cartService) {
+    constructor(router, route, firestore, afAuth, storage, cartService, productService) {
         this.router = router;
         this.route = route;
         this.firestore = firestore;
         this.afAuth = afAuth;
         this.storage = storage;
         this.cartService = cartService;
+        this.productService = productService;
         this.isOwner = false;
         this.selectVal = 0;
         this.product = new _models_product_product__WEBPACK_IMPORTED_MODULE_8__["Product"]();
@@ -626,29 +689,29 @@ let ProductView = class ProductView {
     ionViewWillEnter() {
         this.route.params.subscribe(params => {
             if (params.id) {
-                this.pathId = params.id;
-                this.productCollection = this.firestore.doc('products/' + this.pathId);
-                this.productCollection.valueChanges({ idField: '_id' }).subscribe(productEntity => {
-                    this.product = this.product.convertFromDTO(productEntity);
-                    this.productOrder.priceByEach = this.product.price;
-                    this.productOrder.productId = this.product.id;
-                    const ref = this.storage.ref(this.product.picture);
-                    ref.getDownloadURL().subscribe(url => {
-                        this.productImage = url;
+                if (this.pathId !== params.id) {
+                    this.pathId = params.id;
+                    this.productService.loadProductById(this.pathId).then(value => {
+                        this.product = value;
+                        this.productOrder.product = this.product;
+                        this.productOrder.priceByEach = this.product.price;
+                        this.productOrder.productId = this.product.id;
+                        this.productOrder.productOwnerId = this.product.ownerId;
+                        this.afAuth.authState.subscribe(loggedUser => {
+                            if (loggedUser) {
+                                this.loggedId = loggedUser.uid;
+                                this.loggedId === this.product.ownerId ? this.isOwner = true : this.isOwner = false;
+                            }
+                        });
                     });
-                    this.afAuth.authState.subscribe(loggedUser => {
-                        if (loggedUser) {
-                            this.loggedId = loggedUser.uid;
-                            this.loggedId === this.product.ownerId ? this.isOwner = true : this.isOwner = false;
-                        }
-                    });
-                });
+                }
             }
         });
     }
     ngOnInit() {
     }
     addToCart() {
+        // TODO: Quitar el boton de agregar y poner uno de eliminar del carrito
         this.cartService.addProductToCart(this.productOrder);
     }
 };
@@ -658,7 +721,8 @@ ProductView.ctorParameters = () => [
     { type: _angular_fire_firestore__WEBPACK_IMPORTED_MODULE_5__["AngularFirestore"] },
     { type: _angular_fire_auth__WEBPACK_IMPORTED_MODULE_6__["AngularFireAuth"] },
     { type: _angular_fire_storage__WEBPACK_IMPORTED_MODULE_7__["AngularFireStorage"] },
-    { type: _services_order_cart_service_service__WEBPACK_IMPORTED_MODULE_10__["CartServiceService"] }
+    { type: _services_order_cart_service_service__WEBPACK_IMPORTED_MODULE_10__["CartServiceService"] },
+    { type: _services_products_product_service__WEBPACK_IMPORTED_MODULE_11__["ProductService"] }
 ];
 ProductView = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"])([
     Object(_angular_core__WEBPACK_IMPORTED_MODULE_3__["Component"])({
@@ -669,6 +733,19 @@ ProductView = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"])([
 ], ProductView);
 
 
+
+/***/ }),
+
+/***/ "PdOq":
+/*!***********************************************************!*\
+  !*** ./src/components/cart-item/cart-item.component.scss ***!
+  \***********************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("\n/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IiIsImZpbGUiOiJjYXJ0LWl0ZW0uY29tcG9uZW50LnNjc3MifQ== */");
 
 /***/ }),
 
@@ -861,12 +938,26 @@ let ProductService = class ProductService {
                         this.loadProductImage(currentProduct.picture).then(imageUrl => currentProduct.picture = imageUrl);
                         productList.push(currentProduct);
                     });
+                    console.log(productList);
+                    console.log(productEntities);
                     resolve(productList);
                 });
             }
             else {
                 reject('No Products in cart');
             }
+        });
+    }
+    loadProductById(productIds) {
+        return new Promise((resolve, reject) => {
+            let product;
+            this.productCollection.doc(productIds).valueChanges().subscribe(productEntity => {
+                const currentProduct = new _models_product_product__WEBPACK_IMPORTED_MODULE_4__["Product"]().convertFromDTO(productEntity);
+                currentProduct.id = productIds;
+                this.loadProductImage(currentProduct.picture).then(imageUrl => currentProduct.picture = imageUrl);
+                product = currentProduct;
+                resolve(product);
+            });
         });
     }
     loadProductsByOwnerId(owenerId) {
@@ -925,6 +1016,7 @@ class ProductOrder {
         this._productId = '-1';
         this._productAmount = 0;
         this._priceByEach = 0;
+        this._productOwnerId = '-1';
     }
     reduce() {
         if (this.productAmount > 0) {
@@ -959,6 +1051,18 @@ class ProductOrder {
     }
     set priceByEach(value) {
         this._priceByEach = value;
+    }
+    get productOwnerId() {
+        return this._productOwnerId;
+    }
+    set productOwnerId(value) {
+        this._productOwnerId = value;
+    }
+    get product() {
+        return this._product;
+    }
+    set product(value) {
+        this._product = value;
     }
 }
 
@@ -1135,6 +1239,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _views_product_list_product_list_view__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ../views/product-list/product-list.view */ "AM7J");
 /* harmony import */ var _views_profile_list_profile_list_view__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ../views/profile-list/profile-list.view */ "50wC");
 /* harmony import */ var _views_cart_cart_view__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! ../views/cart/cart.view */ "IwNu");
+/* harmony import */ var _components_cart_item_cart_item_component__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(/*! ../components/cart-item/cart-item.component */ "GV5D");
+
 
 
 
@@ -1174,7 +1280,7 @@ AppModule = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"])([
             _components_navigation_bar_navigation_bar_component__WEBPACK_IMPORTED_MODULE_14__["NavigationBarComponent"],
             _views_product_form_product_form_component__WEBPACK_IMPORTED_MODULE_17__["ProductFormComponent"],
             _views_profile_list_profile_list_view__WEBPACK_IMPORTED_MODULE_21__["ProfileListView"],
-            _components_login_user_login_user_component__WEBPACK_IMPORTED_MODULE_10__["LoginUserComponent"]],
+            _components_login_user_login_user_component__WEBPACK_IMPORTED_MODULE_10__["LoginUserComponent"], _components_cart_item_cart_item_component__WEBPACK_IMPORTED_MODULE_23__["CartItemComponent"]],
         entryComponents: [],
         imports: [_angular_common__WEBPACK_IMPORTED_MODULE_9__["CommonModule"],
             _angular_platform_browser__WEBPACK_IMPORTED_MODULE_2__["BrowserModule"],
@@ -1424,7 +1530,7 @@ RegisterUserComponent = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"])
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony default export */ __webpack_exports__["default"] = ("<ion-content>\n  <ion-text>\n    {{this.cartService.currentCart | json}}\n    {{this.cart | json}}\n  </ion-text>\n</ion-content>\n");
+/* harmony default export */ __webpack_exports__["default"] = ("<ion-content>\r\n  <app-cart-item *ngFor=\"let product of cart\" [product]=\"product\" (productEvent)=\"cartItemEvent($event)\"></app-cart-item>\r\n  <ion-button (click)=\"checkout()\">\r\n    Comprar\r\n  </ion-button>\r\n</ion-content>\r\n");
 
 /***/ }),
 
@@ -1467,17 +1573,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Cart", function() { return Cart; });
 class Cart {
     constructor() {
-        this.productsOrdered = [];
-    }
-    addProduct(product) {
-        this.productsOrdered.push(product);
+        this.ordersList = [];
     }
     getAllIds() {
-        const productIds = [];
-        this.productsOrdered.forEach(value => {
-            productIds.push(value.productId);
-        });
-        return productIds;
+        return [];
     }
 }
 
@@ -1506,7 +1605,7 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony default export */ __webpack_exports__["default"] = ("<ion-content class=\"ion-padding\">\n  <ion-grid>\n    <ion-row class=\"ion-align-items-end\">\n      <ion-col size=\"3\">\n        <ion-img [src]=\"this.productImage\"></ion-img>\n      </ion-col>\n      <ion-col size=\"9\">\n        <ion-text class=\"ion-padding\">\n          <h2 class=\"ion-no-margin\">\n            {{this.product.name}}\n            {{this.product.description}}\n          </h2>\n          <ion-button type=\"button\" *ngIf=\"isOwner\" [routerLink]=\"'/productForm/' + product.id\">\n            Modificar\n          </ion-button>\n        </ion-text>\n      </ion-col>\n    </ion-row>\n    <ion-row style=\"width: fit-content\">\n      <ion-button type=\"button\" [color]=\"'danger'\" (click)=\"productOrder.reduce()\">-</ion-button>\n      <ion-input type=\"number\" readonly=\"true\" [value]=\"productOrder.productAmount\" style=\"width: 50px\"[min]=\"0\"></ion-input>\n      <ion-button type=\"button\" [color]=\"'success'\" (click)=\"productOrder.add()\">+</ion-button>\n    </ion-row>\n    {{productOrder.productAmount * productOrder.priceByEach | currency:'EUR'}}\n    <ion-button type=\"button\" (click)=\"addToCart()\">\n      <ion-icon name=\"bag-add-outline\"></ion-icon>\n    </ion-button>\n  </ion-grid>\n</ion-content>\n");
+/* harmony default export */ __webpack_exports__["default"] = ("<ion-content class=\"ion-padding\">\n  <ion-grid>\n    <ion-row class=\"ion-align-items-end\">\n      <ion-col size=\"3\">\n        <ion-img [src]=\"this.product.picture\"></ion-img>\n      </ion-col>\n      <ion-col size=\"9\">\n        <ion-text class=\"ion-padding\">\n          <h2 class=\"ion-no-margin\">\n            {{this.product.name}}\n            {{this.product.description}}\n          </h2>\n          <ion-button type=\"button\" *ngIf=\"isOwner\" [routerLink]=\"'/productForm/' + product.id\">\n            Modificar\n          </ion-button>\n        </ion-text>\n      </ion-col>\n    </ion-row>\n    <ion-row style=\"width: fit-content\">\n      <ion-button type=\"button\" [color]=\"'danger'\" (click)=\"productOrder.reduce()\">-</ion-button>\n      <ion-input type=\"number\" readonly=\"true\" [value]=\"productOrder.productAmount\" style=\"width: 50px\"[min]=\"0\"></ion-input>\n      <ion-button type=\"button\" [color]=\"'success'\" (click)=\"productOrder.add()\">+</ion-button>\n    </ion-row>\n    {{productOrder.productAmount * productOrder.priceByEach | currency:'EUR'}}\n    <ion-button type=\"button\" (click)=\"addToCart()\">\n      <ion-icon name=\"bag-add-outline\"></ion-icon>\n    </ion-button>\n  </ion-grid>\n</ion-content>\n");
 
 /***/ }),
 
@@ -1940,6 +2039,19 @@ var CategoryEnum;
 
 /***/ }),
 
+/***/ "rdQJ":
+/*!*************************************************************************************************!*\
+  !*** ./node_modules/raw-loader/dist/cjs.js!./src/components/cart-item/cart-item.component.html ***!
+  \*************************************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("<ion-item>\n  <ion-label>\n    {{product.product.name}} x{{product.productAmount}}\n  </ion-label>\n  <ion-button type=\"button\" [color]=\"'danger'\" (click)=\"product.reduce()\">-</ion-button>\n  <ion-button type=\"button\" [color]=\"'success'\" (click)=\"product.add()\">+</ion-button>\n  <ion-button (click)=\"removeFromCart()\">\n    <ion-icon name=\"trash-outline\"></ion-icon>\n  </ion-button>\n</ion-item>\n");
+
+/***/ }),
+
 /***/ "uy1C":
 /*!*******************************************************************!*\
   !*** ./src/components/register-user/register-user.component.sass ***!
@@ -2262,6 +2374,36 @@ ProductFormComponent = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"])(
     })
 ], ProductFormComponent);
 
+
+
+/***/ }),
+
+/***/ "ya8d":
+/*!***********************************!*\
+  !*** ./src/models/order/order.ts ***!
+  \***********************************/
+/*! exports provided: Order, OrderStatusEnum */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Order", function() { return Order; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "OrderStatusEnum", function() { return OrderStatusEnum; });
+class Order {
+    constructor() {
+        this.userId = 'TODO';
+        this.creationDate = new Date();
+        this.status = OrderStatusEnum.Pendiente;
+        this.orderedItems = [];
+    }
+}
+var OrderStatusEnum;
+(function (OrderStatusEnum) {
+    OrderStatusEnum["Pendiente"] = "Pendiente";
+    OrderStatusEnum["Preparado"] = "Preparado";
+    OrderStatusEnum["Entregado"] = "Entregado";
+    OrderStatusEnum["Cancelado"] = "Cancelado";
+})(OrderStatusEnum || (OrderStatusEnum = {}));
 
 
 /***/ }),
