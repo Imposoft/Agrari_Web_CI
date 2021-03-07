@@ -156,6 +156,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _angular_fire_storage__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @angular/fire/storage */ "Vaw3");
 /* harmony import */ var _angular_router__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! @angular/router */ "tyNb");
 /* harmony import */ var _services_products_product_service__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../../services/products/product.service */ "TYbz");
+/* harmony import */ var _pipes_enum_to_array_pipe__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../../pipes/enum-to-array.pipe */ "m4/V");
+
 
 
 
@@ -166,15 +168,17 @@ __webpack_require__.r(__webpack_exports__);
 
 
 let ProductListView = class ProductListView {
-    constructor(firestore, storage, router, route, productService) {
+    constructor(firestore, storage, enumToArrayPipe, router, route, productService) {
         this.firestore = firestore;
         this.storage = storage;
+        this.enumToArrayPipe = enumToArrayPipe;
         this.router = router;
         this.route = route;
         this.productService = productService;
         this.productList = [];
         this.productImages = [];
         this.currentProduct = new _models_product_product__WEBPACK_IMPORTED_MODULE_5__["Product"]();
+        this.unitsList = this.enumToArrayPipe.transform(_models_product_product__WEBPACK_IMPORTED_MODULE_5__["UnitTypeEnum"]);
         this.route.params.subscribe(params => {
             if (params.userId) {
                 this.pathId = params.userId;
@@ -194,10 +198,16 @@ let ProductListView = class ProductListView {
     }
     ngOnInit() {
     }
+    openProduct(product) {
+        if (product.stock) {
+            this.router.navigate(['/product', product.id]);
+        }
+    }
 };
 ProductListView.ctorParameters = () => [
     { type: _angular_fire_firestore__WEBPACK_IMPORTED_MODULE_4__["AngularFirestore"] },
     { type: _angular_fire_storage__WEBPACK_IMPORTED_MODULE_6__["AngularFireStorage"] },
+    { type: _pipes_enum_to_array_pipe__WEBPACK_IMPORTED_MODULE_9__["EnumToArrayPipe"] },
     { type: _angular_router__WEBPACK_IMPORTED_MODULE_7__["Router"] },
     { type: _angular_router__WEBPACK_IMPORTED_MODULE_7__["ActivatedRoute"] },
     { type: _services_products_product_service__WEBPACK_IMPORTED_MODULE_8__["ProductService"] }
@@ -597,6 +607,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _angular_core__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @angular/core */ "fXoL");
 /* harmony import */ var _services_order_cart_service_service__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../services/order/cart-service.service */ "LD/N");
 /* harmony import */ var _services_products_product_service__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../services/products/product.service */ "TYbz");
+/* harmony import */ var _ionic_angular__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @ionic/angular */ "TEn/");
+
 
 
 
@@ -604,9 +616,10 @@ __webpack_require__.r(__webpack_exports__);
 
 
 let CartView = class CartView {
-    constructor(cartService, productService) {
+    constructor(cartService, productService, alertController) {
         this.cartService = cartService;
         this.productService = productService;
+        this.alertController = alertController;
         this.cart = [];
     }
     ngOnInit() {
@@ -625,11 +638,25 @@ let CartView = class CartView {
     }
     checkout() {
         this.cartService.checkoutCart();
+        this.cart = [];
+        this.presentAlert();
+    }
+    presentAlert() {
+        return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, function* () {
+            const alert = yield this.alertController.create({
+                cssClass: 'my-custom-class',
+                header: 'Enhorabuena',
+                message: 'Tu pedido ha sido generado con exito, dirigete a tu carrito para revisarlo.',
+                buttons: ['Aceptar']
+            });
+            yield alert.present();
+        });
     }
 };
 CartView.ctorParameters = () => [
     { type: _services_order_cart_service_service__WEBPACK_IMPORTED_MODULE_4__["CartServiceService"] },
-    { type: _services_products_product_service__WEBPACK_IMPORTED_MODULE_5__["ProductService"] }
+    { type: _services_products_product_service__WEBPACK_IMPORTED_MODULE_5__["ProductService"] },
+    { type: _ionic_angular__WEBPACK_IMPORTED_MODULE_6__["AlertController"] }
 ];
 CartView = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"])([
     Object(_angular_core__WEBPACK_IMPORTED_MODULE_3__["Component"])({
@@ -770,18 +797,30 @@ let CartServiceService = class CartServiceService {
         console.log(this.currentCart.ordersList);
         console.log(orderToEdit);
     }
+    removeOrderFromCart(order) {
+        const orderIndex = this.currentCart.ordersList.indexOf(order);
+        if (orderIndex > -1) {
+            this.currentCart.ordersList.splice(orderIndex, 1);
+        }
+    }
     checkoutCart() {
         console.log(this.currentCart);
         if (this.currentCart.ordersList.length > 0) {
             this.currentCart.ordersList.forEach(value => {
                 const newOrder = this.orderService.createOrderEntity(value);
-                this.uploadOrder(newOrder);
+                this.uploadOrder(newOrder).then(value1 => {
+                    this.removeOrderFromCart(value);
+                });
             });
         }
     }
     uploadOrder(order) {
-        const orderCollection = this.firestore.collection('orders');
-        orderCollection.add(order);
+        return new Promise((resolve, reject) => {
+            const orderCollection = this.firestore.collection('orders');
+            orderCollection.add(order).then(value => {
+                resolve(value);
+            });
+        });
     }
 };
 CartServiceService.ctorParameters = () => [
@@ -1377,7 +1416,7 @@ class ProductOrder {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony default export */ __webpack_exports__["default"] = ("<div>\r\n  <form [formGroup]=\"registrationForm\" class=\"mx-auto\">\r\n    <div class=\"form-group\">\r\n      <label>Email:</label>\r\n      <input\r\n        type=\"text\"\r\n        class=\"form-control\"\r\n        placeholder=\"miemail@mail.com\"\r\n        formControlName=\"email\"\r\n        id=\"emailInput\"\r\n      />\r\n    </div>\r\n    <div class=\"form-group\">\r\n      <label>Contraseña:</label>\r\n      <div class=\"input-group\">\r\n          <input\r\n            type=\"password\"\r\n            name=\"password\"\r\n            autocomplete=\"on\"\r\n            class=\"form-control\"\r\n            formControlName=\"password\"\r\n            id=\"passwordInput\"\r\n            [type]=\"hide ? 'password' : 'text'\"\r\n          />\r\n        <span class=\"input-group-append\">\r\n          <div class=\"input-group-text\">\r\n          </div>\r\n        </span>\r\n      </div>\r\n    </div>\r\n  </form>\r\n  <div class=\"d-flex justify-content-end\">\r\n    <button class=\"d-flex justify-content-end btn btn-outline-primary m-2\" id=\"login\" (click)=\"logIn()\">Iniciar sesion</button>\r\n  </div>\r\n</div>\r\n");
+/* harmony default export */ __webpack_exports__["default"] = ("<div>\r\n  <form [formGroup]=\"registrationForm\" class=\"mx-auto\">\r\n    <div class=\"form-group\">\r\n      <ion-item>\r\n        <ion-label position=\"floating\" type=\"text\">Email:</ion-label>\r\n        <ion-input\r\n          type=\"text\"\r\n          class=\"form-control\"\r\n          placeholder=\"miemail@mail.com\"\r\n          formControlName=\"email\"\r\n          id=\"emailInput\"></ion-input>\r\n      </ion-item>\r\n\r\n      <ion-item>\r\n        <ion-label position=\"floating\" type=\"text\">Contraseña:</ion-label>\r\n        <ion-input\r\n          type=\"password\"\r\n          name=\"password\"\r\n          autocomplete=\"on\"\r\n          class=\"form-control\"\r\n          formControlName=\"password\"\r\n          id=\"passwordInput\"\r\n          [type]=\"hide ? 'password' : 'text'\"></ion-input>\r\n      </ion-item>\r\n    </div>\r\n  </form>\r\n  <div class=\"d-flex justify-content-end\">\r\n    <ion-button class=\"d-flex justify-content-end btn btn-outline-primary m-2\" id=\"login\" (click)=\"logIn()\">Iniciar sesion</ion-button>\r\n  </div>\r\n</div>\r\n");
 
 /***/ }),
 
@@ -1514,7 +1553,7 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony default export */ __webpack_exports__["default"] = ("<ion-content class=\"ion-padding\">\r\n  <ion-grid>\r\n    <ion-row class=\"ion-align-items-end\">\r\n      <ion-col size=\"3\">\r\n        <ion-avatar>\r\n          <img [src]=\"this.profileImage\">\r\n        </ion-avatar>\r\n      </ion-col>\r\n      <ion-col size=\"9\">\r\n        <ion-text class=\"ion-padding\">\r\n          <h2 class=\"ion-no-margin\">\r\n            {{this.user.name}}\r\n          </h2>\r\n        </ion-text>\r\n      </ion-col>\r\n    </ion-row>\r\n  </ion-grid>\r\n  <ion-button *ngIf=\"isFarmer\" [routerLink]=\"'/products/' + this.user.id\">Productos</ion-button>\r\n\r\n  <button (click)=\"logout()\" [routerLink]=\"'/login'\" type=\"button\" class=\"btn btn-danger\">LOGOUT</button>\r\n</ion-content>\r\n\r\n");
+/* harmony default export */ __webpack_exports__["default"] = ("<ion-content class=\"ion-padding\">\r\n  <ion-grid>\r\n    <ion-row class=\"ion-align-items-end\">\r\n        <ion-avatar>\r\n          <img [src]=\"this.profileImage\">\r\n        </ion-avatar>\r\n        <ion-text class=\"ion-padding\">\r\n          <h2 class=\"ion-no-margin\">\r\n            {{this.user.name}}\r\n          </h2>\r\n        </ion-text>\r\n      <ion-button [color]=\"'danger'\" (click)=\"logout()\" *ngIf=\"loggedId\"\r\n                  [routerLink]=\"'/login'\" type=\"button\" class=\"btn btn-danger\">Cerrar sesión</ion-button>\r\n      <ion-button *ngIf=\"isFarmer\" [routerLink]=\"'/products/' + this.user.id\">Productos</ion-button>\r\n    </ion-row>\r\n  </ion-grid>\r\n  <div *ngIf=\"loggedId\">\r\n    <ion-list href=\"mailto:agrari@gmail.com\">\r\n      <ion-item>\r\n        <ion-icon name=\"help-circle-outline\" slot=\"start\"></ion-icon>\r\n        <ion-label>\r\n          ¿Necesitas ayuda? Mandanos un email a:\r\n          <br>\r\n          agrari@gmail.com\r\n        </ion-label>\r\n      </ion-item>\r\n    </ion-list>\r\n  </div>\r\n</ion-content>\r\n\r\n");
 
 /***/ }),
 
@@ -1811,7 +1850,7 @@ let RegisterUserComponent = class RegisterUserComponent {
     takePicture() {
         return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, function* () {
             yield _capacitor_core__WEBPACK_IMPORTED_MODULE_9__["Camera"].getPhoto({
-                quality: 90,
+                quality: 50,
                 allowEditing: true,
                 resultType: _capacitor_core__WEBPACK_IMPORTED_MODULE_9__["CameraResultType"].Base64,
                 webUseInput: true,
@@ -1850,7 +1889,7 @@ RegisterUserComponent = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"])
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony default export */ __webpack_exports__["default"] = ("<ion-content>\r\n  <app-cart-item *ngFor=\"let product of cart\" [product]=\"product\" (productEvent)=\"cartItemEvent($event)\"></app-cart-item>\r\n  <ion-button *ngIf=\"cart.length > 0\" (click)=\"checkout()\">\r\n    Comprar\r\n  </ion-button>\r\n  <ion-text *ngIf=\"cart.length <= 0\">\r\n    Tu carrito esta vacio, añade un producto para comprar.\r\n  </ion-text>\r\n</ion-content>\r\n");
+/* harmony default export */ __webpack_exports__["default"] = ("<ion-content>\r\n  <app-cart-item *ngFor=\"let product of cart\" [product]=\"product\" (productEvent)=\"cartItemEvent($event)\"></app-cart-item>\r\n  <ion-button *ngIf=\"cart.length > 0\" (click)=\"checkout()\">\r\n    Comprar\r\n  </ion-button>\r\n  <ion-text *ngIf=\"cart.length <= 0\" class=\"ion-margin\">\r\n    Tu carrito esta vacio, añade un producto para comprar.\r\n  </ion-text>\r\n</ion-content>\r\n");
 
 /***/ }),
 
@@ -1951,7 +1990,7 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony default export */ __webpack_exports__["default"] = ("<ion-content class=\"ion-padding\">\r\n  <ion-grid>\r\n    <ion-row class=\"ion-align-items-end\">\r\n      <ion-col size=\"3\">\r\n        <ion-img [src]=\"this.product.picture\"></ion-img>\r\n      </ion-col>\r\n      <ion-col size=\"9\">\r\n        <ion-text class=\"ion-padding\">\r\n          <h2 class=\"ion-no-margin\">\r\n            {{this.product.name}}\r\n            {{this.product.description}}\r\n          </h2>\r\n          <ion-button type=\"button\" *ngIf=\"isOwner\" [routerLink]=\"'/productForm/' + product.id\">\r\n            Modificar\r\n          </ion-button>\r\n        </ion-text>\r\n      </ion-col>\r\n    </ion-row>\r\n    <ion-row style=\"width: fit-content\">\r\n      <ion-button type=\"button\" [color]=\"'danger'\" (click)=\"productOrder.reduce()\">-</ion-button>\r\n      <ion-input type=\"number\" readonly=\"true\" [value]=\"productOrder.productAmount\" style=\"width: 50px\"[min]=\"0\"></ion-input>\r\n      <ion-button type=\"button\" [color]=\"'success'\" (click)=\"productOrder.add()\">+</ion-button>\r\n    </ion-row>\r\n    {{productOrder.productAmount * productOrder.priceByEach | currency:'EUR'}}\r\n    <ion-button type=\"button\" (click)=\"addToCart()\">\r\n      <ion-icon name=\"bag-add-outline\"></ion-icon>\r\n    </ion-button>\r\n  </ion-grid>\r\n</ion-content>\r\n");
+/* harmony default export */ __webpack_exports__["default"] = ("<ion-content class=\"ion-padding\">\r\n  <ion-grid>\r\n    <ion-row class=\"ion-align-items-end\">\r\n      <ion-col size=\"3\">\r\n        <ion-img [src]=\"this.product.picture\"></ion-img>\r\n      </ion-col>\r\n      <ion-col size=\"9\">\r\n        <ion-text class=\"ion-padding\">\r\n          <h2 class=\"ion-no-margin\">\r\n            {{this.product.name}}\r\n            {{this.product.description}}\r\n          </h2>\r\n          <ion-button type=\"button\" *ngIf=\"isOwner\" [routerLink]=\"'/productForm/' + product.id\">\r\n            Modificar\r\n          </ion-button>\r\n        </ion-text>\r\n      </ion-col>\r\n    </ion-row>\r\n    <div *ngIf=\"!isOwner\">\r\n      <ion-row style=\"width: fit-content\">\r\n        <ion-button type=\"button\" [color]=\"'danger'\" (click)=\"productOrder.reduce()\">-</ion-button>\r\n        <ion-input type=\"number\" readonly=\"true\" [value]=\"productOrder.productAmount\" style=\"width: 50px\"[min]=\"0\"></ion-input>\r\n        <ion-button type=\"button\" [color]=\"'success'\" (click)=\"productOrder.add()\">+</ion-button>\r\n      </ion-row>\r\n      {{productOrder.productAmount * productOrder.priceByEach | currency:'EUR'}}\r\n      <ion-button type=\"button\" (click)=\"addToCart()\">\r\n        <ion-icon name=\"bag-add-outline\"></ion-icon>\r\n      </ion-button>\r\n    </div>\r\n  </ion-grid>\r\n</ion-content>\r\n");
 
 /***/ }),
 
@@ -2258,7 +2297,7 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony default export */ __webpack_exports__["default"] = ("<ion-content fullscreen>\n  <ion-card>\n    <ion-card-header>\n      <ion-card-title *ngIf=\"isLogin\">Iniciar Sesión</ion-card-title>\n      <ion-card-title *ngIf=\"!isLogin\">Registrarse</ion-card-title>\n    </ion-card-header>\n    <ion-card-content>\n      <app-login-user *ngIf=\"isLogin\"></app-login-user>\n      <app-register-user *ngIf=\"!isLogin\"></app-register-user>\n    </ion-card-content>\n  </ion-card>\n  <ion-button *ngIf=\"isLogin\" (click)=\"isLogin=!isLogin\" class=\"ion-float-right\">No tengo cuenta</ion-button>\n  <ion-button *ngIf=\"!isLogin\" (click)=\"isLogin=!isLogin\" class=\"ion-float-right\">Ya tengo cuenta</ion-button>\n</ion-content>\n");
+/* harmony default export */ __webpack_exports__["default"] = ("<ion-content fullscreen>\r\n  <ion-card>\r\n    <ion-card-header>\r\n      <ion-card-title *ngIf=\"isLogin\">Iniciar Sesión</ion-card-title>\r\n      <ion-card-title *ngIf=\"!isLogin\">Registrarse</ion-card-title>\r\n    </ion-card-header>\r\n    <ion-card-content>\r\n      <app-login-user *ngIf=\"isLogin\"></app-login-user>\r\n      <app-register-user *ngIf=\"!isLogin\"></app-register-user>\r\n    </ion-card-content>\r\n    <ion-button fill=\"clear\" size=\"small\" *ngIf=\"isLogin\" (click)=\"isLogin=!isLogin\">\r\n      ¿No tienes cuenta? ¡Create una!\r\n    </ion-button>\r\n    <ion-button fill=\"clear\" size=\"small\" *ngIf=\"!isLogin\" (click)=\"isLogin=!isLogin\" >\r\n      ¿Ya tienes cuenta? ¡Inicia sesion!\r\n    </ion-button>\r\n  </ion-card>\r\n</ion-content>\r\n");
 
 /***/ }),
 
@@ -2271,7 +2310,7 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony default export */ __webpack_exports__["default"] = ("<ion-content fullscreen>\n  <form [formGroup]=\"productForm\" (submit)=\"updateProduct()\">\n    <ion-item>\n      <ion-label position=\"floating\" type=\"text\">Nombre del producto</ion-label>\n      <ion-input formControlName=\"name\" placeholder=\"Patata\" [value]=\"product.name\"></ion-input>\n    </ion-item>\n    <ion-item>\n      <ion-label position=\"floating\" type=\"text\">Descripcion</ion-label>\n      <ion-input formControlName=\"description\" placeholder=\"La mas fuerte del campo\" [value]=\"product.description\"></ion-input>\n    </ion-item>\n    <ion-item>\n      <ion-label position=\"floating\" type=\"number\">Precio €</ion-label>\n      <ion-input formControlName=\"price\" placeholder=\"10\" [value]=\"product.price\"></ion-input>\n    </ion-item>\n    <ion-item>\n      <ion-label>Tipo de Unidad</ion-label>\n      <ion-select value=\"0\" ok-text=\"Aceptar\" cancel-text=\"Cancelar\" formControlName=\"unit\" [value]=\"product.unit\">\n        <ion-select-option *ngFor=\"let unit of optionslist; let i = index\" [value]=\"i\"> {{unit}} </ion-select-option>\n      </ion-select>\n    </ion-item>\n    <ion-item>\n      <ion-label>Categoria</ion-label>\n      <ion-select value=\"0\" ok-text=\"Aceptar\" cancel-text=\"Cancelar\" formControlName=\"category\" [value]=\"product.category\">\n        <ion-select-option *ngFor=\"let category of categorylist; let i = index\" [value]=\"i\"> {{category}} </ion-select-option>\n      </ion-select>\n    </ion-item>\n    <ion-item>\n      <ion-label position=\"stacked\" type=\"file\">Foto</ion-label>\n      <ion-input (click)=\"takePicture()\" readonly formControlName=\"picture\" [value]=\"product.picture\"></ion-input>\n    </ion-item>\n    <ion-item *ngIf=\"product.id\">\n      <ion-checkbox slot=\"start\" formControlName=\"stock\" [checked]=\"product.stock\"></ion-checkbox>\n      <ion-label>En stock</ion-label>\n    </ion-item>\n  </form>\n  <ion-row class=\"cardfooter\">\n    <ion-col>\n      <ion-button *ngIf=\"!product.id\" class=\"ion-float-right\" (click)=\"createProduct()\" type=\"button\">\n        <div>Crear</div>\n      </ion-button>\n      <ion-button *ngIf=\"product.id\" class=\"ion-float-right\" (click)=\"updateProduct()\" type=\"button\">\n        <div *ngIf=\"product.id\">Modificar</div>\n      </ion-button>\n    </ion-col>\n  </ion-row>\n</ion-content>\n");
+/* harmony default export */ __webpack_exports__["default"] = ("<ion-content fullscreen>\r\n  <form [formGroup]=\"productForm\" (submit)=\"updateProduct()\">\r\n    <ion-item>\r\n      <ion-label position=\"floating\" type=\"text\">Nombre del producto</ion-label>\r\n      <ion-input formControlName=\"name\" placeholder=\"Patata\" [value]=\"product.name\"></ion-input>\r\n    </ion-item>\r\n    <ion-item>\r\n      <ion-label position=\"floating\" type=\"text\">Descripcion</ion-label>\r\n      <ion-input formControlName=\"description\" placeholder=\"La mas fuerte del campo\" [value]=\"product.description\"></ion-input>\r\n    </ion-item>\r\n    <ion-item>\r\n      <ion-label position=\"floating\" type=\"number\">Precio €</ion-label>\r\n      <ion-input formControlName=\"price\" placeholder=\"10\" [value]=\"product.price\"></ion-input>\r\n    </ion-item>\r\n    <ion-item>\r\n      <ion-label>Tipo de Unidad</ion-label>\r\n      <ion-select value=\"0\" interface=\"popover\" formControlName=\"unit\" [value]=\"product.unit\">\r\n        <ion-select-option *ngFor=\"let unit of optionslist; let i = index\" [value]=\"i\"> {{unit}} </ion-select-option>\r\n      </ion-select>\r\n    </ion-item>\r\n    <ion-item>\r\n      <ion-label>Categoria</ion-label>\r\n      <ion-select value=\"0\" interface=\"popover\" formControlName=\"category\" [value]=\"product.category\">\r\n        <ion-select-option *ngFor=\"let category of categorylist; let i = index\" [value]=\"i\"> {{category}} </ion-select-option>\r\n      </ion-select>\r\n    </ion-item>\r\n    <ion-item>\r\n      <ion-label position=\"stacked\" type=\"file\">Foto</ion-label>\r\n      <ion-input (click)=\"takePicture()\" readonly formControlName=\"picture\" [value]=\"product.picture\"></ion-input>\r\n    </ion-item>\r\n    <ion-item *ngIf=\"product.id\">\r\n      <ion-checkbox slot=\"start\" formControlName=\"stock\" [checked]=\"product.stock\"></ion-checkbox>\r\n      <ion-label>En stock</ion-label>\r\n    </ion-item>\r\n  </form>\r\n  <ion-row class=\"cardfooter\">\r\n    <ion-col>\r\n      <ion-button *ngIf=\"!product.id\" class=\"ion-float-right\" (click)=\"createProduct()\" type=\"button\">\r\n        <div>Crear</div>\r\n      </ion-button>\r\n      <ion-button *ngIf=\"product.id\" class=\"ion-float-right\" (click)=\"updateProduct()\" type=\"button\">\r\n        <div *ngIf=\"product.id\">Modificar</div>\r\n      </ion-button>\r\n    </ion-col>\r\n  </ion-row>\r\n</ion-content>\r\n");
 
 /***/ }),
 
@@ -2284,7 +2323,7 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony default export */ __webpack_exports__["default"] = ("<ion-content>\r\n  <ion-list>\r\n    <ion-list-header>\r\n      Productos:\r\n    </ion-list-header>\r\n\r\n    <ion-item *ngFor=\"let product of productList\">\r\n      <!-- Vista si hay stock -->\r\n      <div *ngIf=\"product.stock\" [routerLink]=\"'/product/' + product.id\" style=\"width: 100%;\">\r\n        <ion-avatar slot=\"start\">\r\n          <img [src]=\"product.picture\" [ngStyle]=\"!product.stock ? { '-webkit-filter': 'grayscale(100%)', 'filter': 'grayscale(100%)'} : {}\">\r\n        </ion-avatar>\r\n        <ion-label>\r\n          <h2>{{product.name}}</h2>\r\n          <h3>{{product.description}}</h3>\r\n        </ion-label>\r\n        <ion-label *ngIf=\"!product.stock\" color=\"light\">Sin stock</ion-label>\r\n      </div>\r\n\r\n      <!-- Vista si no hay stock -->\r\n      <div *ngIf=\"!product.stock\" style=\"width: 100%;\">\r\n        <ion-avatar slot=\"start\">\r\n          <img [src]=\"product.picture\" [ngStyle]=\"{ '-webkit-filter': 'grayscale(100%)', 'filter': 'grayscale(100%)'}\">\r\n        </ion-avatar>\r\n        <ion-label>\r\n          <h2>{{product.name}}</h2>\r\n          <h3>{{product.description}}</h3>\r\n        </ion-label>\r\n        <ion-badge color=\"danger\" slot=\"end\">Sin stock</ion-badge>\r\n      </div>\r\n    </ion-item>\r\n  </ion-list>\r\n</ion-content>\r\n");
+/* harmony default export */ __webpack_exports__["default"] = ("<ion-content>\r\n  <ion-list>\r\n    <ion-list-header>\r\n      Productos:\r\n    </ion-list-header>\r\n\r\n    <ion-item *ngFor=\"let product of productList\" (click)=\"openProduct(product)\">\r\n      <!-- Vista si hay stock -->\r\n      <ion-avatar slot=\"start\">\r\n        <img [src]=\"product.picture\" [ngStyle]=\"!product.stock ? { '-webkit-filter': 'grayscale(100%)', 'filter': 'grayscale(100%)'} : {}\">\r\n      </ion-avatar>\r\n      <ion-label>\r\n        <h2>{{product.name}}</h2>\r\n        <h3>{{product.description}}</h3>\r\n        <ion-badge *ngIf=\"!product.stock\" color=\"danger\" slot=\"end\">Sin stock</ion-badge>\r\n      </ion-label>\r\n      <ion-label slot=\"end\">\r\n        {{product.price | currency:'EUR' }} x {{unitsList[product.unit]}}\r\n      </ion-label>\r\n    </ion-item>\r\n  </ion-list>\r\n</ion-content>\r\n");
 
 /***/ }),
 
@@ -2898,7 +2937,7 @@ let ProductFormComponent = class ProductFormComponent {
     takePicture() {
         return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, function* () {
             yield _capacitor_core__WEBPACK_IMPORTED_MODULE_6__["Camera"].getPhoto({
-                quality: 90,
+                quality: 50,
                 allowEditing: true,
                 resultType: _capacitor_core__WEBPACK_IMPORTED_MODULE_6__["CameraResultType"].Base64,
                 webUseInput: true,
