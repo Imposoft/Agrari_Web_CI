@@ -179,10 +179,16 @@ let ProductListView = class ProductListView {
             if (params.userId) {
                 this.pathId = params.userId;
                 this.productList = [];
-                this.productService.loadProductsByOwnerId(this.pathId).then(value => this.productList = value);
+                this.productService.loadProductsByOwnerId(this.pathId).then(value => {
+                    this.productList = value;
+                    this.productList.sort(compare);
+                });
             }
             else {
-                this.productService.loadAllProducts().then(value => this.productList = value);
+                this.productService.loadAllProducts().then(value => {
+                    this.productList = value;
+                    this.productList.sort(compare);
+                });
             }
         });
     }
@@ -204,7 +210,29 @@ ProductListView = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"])([
     })
 ], ProductListView);
 
+function compare(a, b) {
+    if (a.stock && !b.stock) {
+        return -1;
+    }
+    if (!a.stock && b.stock) {
+        return 1;
+    }
+    return 0;
+}
 
+
+/***/ }),
+
+/***/ "AihG":
+/*!*****************************************************************************************!*\
+  !*** ./node_modules/raw-loader/dist/cjs.js!./src/views/statistics/statistics.view.html ***!
+  \*****************************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("<ion-content>\r\n  <ion-card>\r\n    <ion-card-header>\r\n      <ion-card-title>Has facturado: {{anything.totalSaleAmount | currency:'EUR'}}</ion-card-title>\r\n      <ion-card-subtitle>Con un total de {{anything.totalOrders}} pedidos</ion-card-subtitle>\r\n    </ion-card-header>\r\n    <ion-card-content>\r\n      Tus productos mas vendidos:\r\n      <ion-list>\r\n        <ion-item *ngFor=\"let product of anything.productsOrdered\">\r\n          {{product.name}} x\r\n          {{product.productAmount}}\r\n        </ion-item>\r\n      </ion-list>\r\n    </ion-card-content>\r\n  </ion-card>\r\n</ion-content>\r\n");
 
 /***/ }),
 
@@ -320,8 +348,10 @@ let OrderListView = class OrderListView {
     }
     ionViewWillEnter() {
         this.orderList = [];
-        this.orderService.loadAllOrders().then(value => {
+        this.orderService.loadAllOrdersOfCurrentUser().then(value => {
             this.orderList = value;
+            console.log(this.orderList);
+            this.orderList.sort(compare);
         });
     }
 };
@@ -335,6 +365,69 @@ OrderListView = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"])([
         styles: [_order_list_view_scss__WEBPACK_IMPORTED_MODULE_2__["default"]]
     })
 ], OrderListView);
+
+function compare(a, b) {
+    if (a.creationDate.seconds < b.creationDate.seconds) {
+        return -1;
+    }
+    if (a.creationDate.seconds > b.creationDate.seconds) {
+        return 1;
+    }
+    return 0;
+}
+
+
+/***/ }),
+
+/***/ "E9lE":
+/*!*************************************************!*\
+  !*** ./src/views/statistics/statistics.view.ts ***!
+  \*************************************************/
+/*! exports provided: StatisticsView */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "StatisticsView", function() { return StatisticsView; });
+/* harmony import */ var tslib__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! tslib */ "mrSG");
+/* harmony import */ var _raw_loader_statistics_view_html__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! raw-loader!./statistics.view.html */ "AihG");
+/* harmony import */ var _statistics_view_scss__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./statistics.view.scss */ "XB9S");
+/* harmony import */ var _angular_core__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @angular/core */ "fXoL");
+/* harmony import */ var _angular_router__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @angular/router */ "tyNb");
+/* harmony import */ var _services_order_order_service__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../services/order/order.service */ "uW7w");
+/* harmony import */ var _models_statistics_stats__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../../models/statistics/stats */ "PcW2");
+
+
+
+
+
+
+
+let StatisticsView = class StatisticsView {
+    constructor(router, route, orderService) {
+        this.router = router;
+        this.route = route;
+        this.orderService = orderService;
+        this.anything = new _models_statistics_stats__WEBPACK_IMPORTED_MODULE_6__["Stats"]();
+    }
+    ngOnInit() {
+    }
+    ionViewWillEnter() {
+        this.orderService.loadUserSalesRecord().then(value => this.anything = value);
+    }
+};
+StatisticsView.ctorParameters = () => [
+    { type: _angular_router__WEBPACK_IMPORTED_MODULE_4__["Router"] },
+    { type: _angular_router__WEBPACK_IMPORTED_MODULE_4__["ActivatedRoute"] },
+    { type: _services_order_order_service__WEBPACK_IMPORTED_MODULE_5__["OrderService"] }
+];
+StatisticsView = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"])([
+    Object(_angular_core__WEBPACK_IMPORTED_MODULE_3__["Component"])({
+        selector: 'app-statistics',
+        template: _raw_loader_statistics_view_html__WEBPACK_IMPORTED_MODULE_1__["default"],
+        styles: [_statistics_view_scss__WEBPACK_IMPORTED_MODULE_2__["default"]]
+    })
+], StatisticsView);
 
 
 
@@ -617,6 +710,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _models_order_order__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../models/order/order */ "ya8d");
 /* harmony import */ var _order_service__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./order.service */ "uW7w");
 /* harmony import */ var _angular_fire_firestore__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @angular/fire/firestore */ "I/3d");
+/* harmony import */ var _auth_auth_service_service__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../auth/auth-service.service */ "v1tz");
+
 
 
 
@@ -624,9 +719,10 @@ __webpack_require__.r(__webpack_exports__);
 
 
 let CartServiceService = class CartServiceService {
-    constructor(orderService, firestore) {
+    constructor(orderService, firestore, authService) {
         this.orderService = orderService;
         this.firestore = firestore;
+        this.authService = authService;
         this.currentCart = new _models_cart_cart__WEBPACK_IMPORTED_MODULE_2__["Cart"]();
     }
     addProductToCart(productOrder) {
@@ -645,6 +741,7 @@ let CartServiceService = class CartServiceService {
     }
     generateNewOrderFromProduct(productOrder) {
         const newOrderToAdd = new _models_order_order__WEBPACK_IMPORTED_MODULE_3__["Order"]();
+        newOrderToAdd.userId = this.authService.getCurrentUserId();
         newOrderToAdd.ownerId = productOrder.productOwnerId;
         newOrderToAdd.orderedItems.push(productOrder);
         return newOrderToAdd;
@@ -689,7 +786,8 @@ let CartServiceService = class CartServiceService {
 };
 CartServiceService.ctorParameters = () => [
     { type: _order_service__WEBPACK_IMPORTED_MODULE_4__["OrderService"] },
-    { type: _angular_fire_firestore__WEBPACK_IMPORTED_MODULE_5__["AngularFirestore"] }
+    { type: _angular_fire_firestore__WEBPACK_IMPORTED_MODULE_5__["AngularFirestore"] },
+    { type: _auth_auth_service_service__WEBPACK_IMPORTED_MODULE_6__["AuthServiceService"] }
 ];
 CartServiceService = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"])([
     Object(_angular_core__WEBPACK_IMPORTED_MODULE_1__["Injectable"])({
@@ -812,6 +910,35 @@ ProductView = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"])([
 
 /***/ }),
 
+/***/ "PcW2":
+/*!****************************************!*\
+  !*** ./src/models/statistics/stats.ts ***!
+  \****************************************/
+/*! exports provided: Stats, StatsProductOrders */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Stats", function() { return Stats; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "StatsProductOrders", function() { return StatsProductOrders; });
+class Stats {
+    constructor() {
+        this.productsOrdered = [];
+        this.totalOrders = 0;
+        this.totalSaleAmount = 0;
+    }
+}
+class StatsProductOrders {
+    constructor() {
+        this.productAmount = 0;
+        this.numberOfOrders = 0;
+        this.name = '';
+    }
+}
+
+
+/***/ }),
+
 /***/ "PdOq":
 /*!***********************************************************!*\
   !*** ./src/components/cart-item/cart-item.component.scss ***!
@@ -910,19 +1037,64 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _raw_loader_order_item_component_html__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! raw-loader!./order-item.component.html */ "mhRT");
 /* harmony import */ var _order_item_component_scss__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./order-item.component.scss */ "cn8i");
 /* harmony import */ var _angular_core__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @angular/core */ "fXoL");
+/* harmony import */ var _models_order_order__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../models/order/order */ "ya8d");
+/* harmony import */ var _services_auth_auth_service_service__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../services/auth/auth-service.service */ "v1tz");
+/* harmony import */ var _services_profiles_profiles_service__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../../services/profiles/profiles.service */ "Wnju");
+/* harmony import */ var _models_user_user_model__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../../models/user/user.model */ "aUIA");
+/* harmony import */ var _services_order_order_service__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../../services/order/order.service */ "uW7w");
+
+
+
+
+
 
 
 
 
 let OrderItemComponent = class OrderItemComponent {
-    constructor() {
+    constructor(authService, profileService, orderService) {
+        this.authService = authService;
+        this.profileService = profileService;
+        this.orderService = orderService;
+        // @Output()
         this.finalPrice = 0;
+        this.isFarmer = false;
+        this.isFarmer = authService.getIsFarmer();
+        this.orderUser = new _models_user_user_model__WEBPACK_IMPORTED_MODULE_7__["User"]();
     }
     ngOnInit() {
         this.finalPrice = this.order.getOrderPrice();
+        this.profileService.loadUserById(this.order.userId).then(value => {
+            this.orderUser = value;
+        });
+    }
+    cancelOrder() {
+        this.orderService.cancelOrderById(this.order.id).then(value => {
+            if (value) {
+                this.order.status = _models_order_order__WEBPACK_IMPORTED_MODULE_4__["OrderStatusEnum"].Cancelado;
+            }
+        });
+    }
+    prepareOrder() {
+        this.orderService.markOrderAsPreparedById(this.order.id).then(value => {
+            if (value) {
+                this.order.status = _models_order_order__WEBPACK_IMPORTED_MODULE_4__["OrderStatusEnum"].Preparado;
+            }
+        });
+    }
+    deliveredOrder() {
+        this.orderService.markOrderAsDeliveredById(this.order.id).then(value => {
+            if (value) {
+                this.order.status = _models_order_order__WEBPACK_IMPORTED_MODULE_4__["OrderStatusEnum"].Preparado;
+            }
+        });
     }
 };
-OrderItemComponent.ctorParameters = () => [];
+OrderItemComponent.ctorParameters = () => [
+    { type: _services_auth_auth_service_service__WEBPACK_IMPORTED_MODULE_5__["AuthServiceService"] },
+    { type: _services_profiles_profiles_service__WEBPACK_IMPORTED_MODULE_6__["ProfilesService"] },
+    { type: _services_order_order_service__WEBPACK_IMPORTED_MODULE_8__["OrderService"] }
+];
 OrderItemComponent.propDecorators = {
     order: [{ type: _angular_core__WEBPACK_IMPORTED_MODULE_3__["Input"] }]
 };
@@ -998,7 +1170,7 @@ AppComponent = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"])([
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony default export */ __webpack_exports__["default"] = ("<!-- NAV BAR USER -->\n<ion-tabs *ngIf=\"!isFarmer && isLogged\">\n  <ion-tab-bar slot=\"bottom\">\n    <ion-tab-button [routerLink]=\"'/orders'\">\n      <ion-icon name=\"cube-outline\"></ion-icon>\n      <ion-label>Pedidos</ion-label>\n    </ion-tab-button>\n\n    <ion-tab-button [routerLink]=\"'/profiles'\">\n      <ion-icon name=\"list-outline\"></ion-icon>\n      <ion-label>Productores</ion-label>\n    </ion-tab-button>\n\n    <ion-tab-button [routerLink]=\"'/products'\">\n      <ion-icon name=\"search-outline\"></ion-icon>\n      <ion-label>Buscar</ion-label>\n    </ion-tab-button>\n\n    <ion-tab-button [routerLink]=\"'/cart'\">\n      <ion-icon name=\"cart-outline\"></ion-icon>\n      <ion-label>Carrito</ion-label>\n    </ion-tab-button>\n\n    <ion-tab-button [routerLink]=\"'/profile'\">\n      <ion-icon name=\"person-outline\"></ion-icon>\n      <ion-label>Perfil</ion-label>\n    </ion-tab-button>\n  </ion-tab-bar>\n</ion-tabs>\n<!-- NAV BAR FARMER -->\n<ion-tabs *ngIf=\"isFarmer && isLogged\">\n  <ion-tab-bar slot=\"bottom\">\n    <ion-tab-button [routerLink]=\"'/products/' + this.userId\">\n      <ion-icon name=\"list-outline\"></ion-icon>\n      <ion-label>Productos</ion-label>\n    </ion-tab-button>\n\n    <ion-tab-button>\n      <ion-icon name=\"stats-chart-outline\"></ion-icon>\n      <ion-label>Estadisticas</ion-label>\n    </ion-tab-button>\n\n    <ion-tab-button [routerLink]=\"'/productForm'\">\n      <ion-icon name=\"add-outline\"></ion-icon>\n      <ion-label>Crear</ion-label>\n    </ion-tab-button>\n\n    <ion-tab-button [routerLink]=\"'/orders'\">\n      <ion-icon name=\"cube-outline\"></ion-icon>\n      <ion-label>Pedidos</ion-label>\n    </ion-tab-button>\n\n    <ion-tab-button [routerLink]=\"'profile'\">\n      <ion-icon name=\"person-outline\"></ion-icon>\n      <ion-label>Perfil</ion-label>\n    </ion-tab-button>\n  </ion-tab-bar>\n</ion-tabs>\n");
+/* harmony default export */ __webpack_exports__["default"] = ("<!-- NAV BAR USER -->\r\n<ion-tabs *ngIf=\"!isFarmer && isLogged\">\r\n  <ion-tab-bar slot=\"bottom\">\r\n    <ion-tab-button [routerLink]=\"'/orders'\">\r\n      <ion-icon name=\"cube-outline\"></ion-icon>\r\n      <ion-label>Pedidos</ion-label>\r\n    </ion-tab-button>\r\n\r\n    <ion-tab-button [routerLink]=\"'/profiles'\">\r\n      <ion-icon name=\"list-outline\"></ion-icon>\r\n      <ion-label>Productores</ion-label>\r\n    </ion-tab-button>\r\n\r\n    <ion-tab-button [routerLink]=\"'/products'\">\r\n      <ion-icon name=\"search-outline\"></ion-icon>\r\n      <ion-label>Buscar</ion-label>\r\n    </ion-tab-button>\r\n\r\n    <ion-tab-button [routerLink]=\"'/cart'\">\r\n      <ion-icon name=\"cart-outline\"></ion-icon>\r\n      <ion-label>Carrito</ion-label>\r\n    </ion-tab-button>\r\n\r\n    <ion-tab-button [routerLink]=\"'/profile'\">\r\n      <ion-icon name=\"person-outline\"></ion-icon>\r\n      <ion-label>Perfil</ion-label>\r\n    </ion-tab-button>\r\n  </ion-tab-bar>\r\n</ion-tabs>\r\n<!-- NAV BAR FARMER -->\r\n<ion-tabs *ngIf=\"isFarmer && isLogged\">\r\n  <ion-tab-bar slot=\"bottom\">\r\n    <ion-tab-button [routerLink]=\"'/products/' + this.userId\">\r\n      <ion-icon name=\"list-outline\"></ion-icon>\r\n      <ion-label>Productos</ion-label>\r\n    </ion-tab-button>\r\n\r\n    <ion-tab-button [routerLink]=\"'/statistics/' + this.userId\">\r\n      <ion-icon name=\"stats-chart-outline\"></ion-icon>\r\n      <ion-label>Estadisticas</ion-label>\r\n    </ion-tab-button>\r\n\r\n    <ion-tab-button [routerLink]=\"'/productForm'\">\r\n      <ion-icon name=\"add-outline\"></ion-icon>\r\n      <ion-label>Crear</ion-label>\r\n    </ion-tab-button>\r\n\r\n    <ion-tab-button [routerLink]=\"'/orders'\">\r\n      <ion-icon name=\"cube-outline\"></ion-icon>\r\n      <ion-label>Pedidos</ion-label>\r\n    </ion-tab-button>\r\n\r\n    <ion-tab-button [routerLink]=\"'profile'\">\r\n      <ion-icon name=\"person-outline\"></ion-icon>\r\n      <ion-label>Perfil</ion-label>\r\n    </ion-tab-button>\r\n  </ion-tab-bar>\r\n</ion-tabs>\r\n");
 
 /***/ }),
 
@@ -1307,6 +1479,19 @@ ProfilesService = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"])([
 
 /***/ }),
 
+/***/ "XB9S":
+/*!***************************************************!*\
+  !*** ./src/views/statistics/statistics.view.scss ***!
+  \***************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("\n/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IiIsImZpbGUiOiJzdGF0aXN0aWNzLnZpZXcuc2NzcyJ9 */");
+
+/***/ }),
+
 /***/ "YHzb":
 /*!*********************************************************************************************!*\
   !*** ./node_modules/raw-loader/dist/cjs.js!./src/views/profile-list/profile-list.view.html ***!
@@ -1329,7 +1514,7 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony default export */ __webpack_exports__["default"] = ("<ion-content class=\"ion-padding\">\n  <ion-grid>\n    <ion-row class=\"ion-align-items-end\">\n      <ion-col size=\"3\">\n        <ion-avatar>\n          <img [src]=\"this.profileImage\">\n        </ion-avatar>\n      </ion-col>\n      <ion-col size=\"9\">\n        <ion-text class=\"ion-padding\">\n          <h2 class=\"ion-no-margin\">\n            {{this.user.name}}\n          </h2>\n        </ion-text>\n      </ion-col>\n    </ion-row>\n  </ion-grid>\n  <ion-button *ngIf=\"isFarmer\" [routerLink]=\"'/products/' + this.user.id\">Productos</ion-button>\n\n  <button (click)=\"logout()\" [routerLink]=\"'/login'\" type=\"button\" class=\"btn btn-danger\">LOGOUT</button>\n</ion-content>\n\n");
+/* harmony default export */ __webpack_exports__["default"] = ("<ion-content class=\"ion-padding\">\r\n  <ion-grid>\r\n    <ion-row class=\"ion-align-items-end\">\r\n      <ion-col size=\"3\">\r\n        <ion-avatar>\r\n          <img [src]=\"this.profileImage\">\r\n        </ion-avatar>\r\n      </ion-col>\r\n      <ion-col size=\"9\">\r\n        <ion-text class=\"ion-padding\">\r\n          <h2 class=\"ion-no-margin\">\r\n            {{this.user.name}}\r\n          </h2>\r\n        </ion-text>\r\n      </ion-col>\r\n    </ion-row>\r\n  </ion-grid>\r\n  <ion-button *ngIf=\"isFarmer\" [routerLink]=\"'/products/' + this.user.id\">Productos</ion-button>\r\n\r\n  <button (click)=\"logout()\" [routerLink]=\"'/login'\" type=\"button\" class=\"btn btn-danger\">LOGOUT</button>\r\n</ion-content>\r\n\r\n");
 
 /***/ }),
 
@@ -1369,6 +1554,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _components_cart_item_cart_item_component__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(/*! ../components/cart-item/cart-item.component */ "GV5D");
 /* harmony import */ var _views_order_list_order_list_view__WEBPACK_IMPORTED_MODULE_24__ = __webpack_require__(/*! ../views/order-list/order-list.view */ "DPVA");
 /* harmony import */ var _components_order_item_order_item_component__WEBPACK_IMPORTED_MODULE_25__ = __webpack_require__(/*! ../components/order-item/order-item.component */ "Q/nm");
+/* harmony import */ var _views_statistics_statistics_view__WEBPACK_IMPORTED_MODULE_26__ = __webpack_require__(/*! ../views/statistics/statistics.view */ "E9lE");
+
 
 
 
@@ -1407,6 +1594,7 @@ AppModule = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"])([
             _views_product_list_product_list_view__WEBPACK_IMPORTED_MODULE_20__["ProductListView"],
             _views_cart_cart_view__WEBPACK_IMPORTED_MODULE_22__["CartView"],
             _views_order_list_order_list_view__WEBPACK_IMPORTED_MODULE_24__["OrderListView"],
+            _views_statistics_statistics_view__WEBPACK_IMPORTED_MODULE_26__["StatisticsView"],
             /* COMPONENTS */
             _components_register_user_register_user_component__WEBPACK_IMPORTED_MODULE_13__["RegisterUserComponent"],
             _components_navigation_bar_navigation_bar_component__WEBPACK_IMPORTED_MODULE_14__["NavigationBarComponent"],
@@ -1763,7 +1951,7 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony default export */ __webpack_exports__["default"] = ("<ion-content class=\"ion-padding\">\n  <ion-grid>\n    <ion-row class=\"ion-align-items-end\">\n      <ion-col size=\"3\">\n        <ion-img [src]=\"this.product.picture\"></ion-img>\n      </ion-col>\n      <ion-col size=\"9\">\n        <ion-text class=\"ion-padding\">\n          <h2 class=\"ion-no-margin\">\n            {{this.product.name}}\n            {{this.product.description}}\n          </h2>\n          <ion-button type=\"button\" *ngIf=\"isOwner\" [routerLink]=\"'/productForm/' + product.id\">\n            Modificar\n          </ion-button>\n        </ion-text>\n      </ion-col>\n    </ion-row>\n    <ion-row style=\"width: fit-content\">\n      <ion-button type=\"button\" [color]=\"'danger'\" (click)=\"productOrder.reduce()\">-</ion-button>\n      <ion-input type=\"number\" readonly=\"true\" [value]=\"productOrder.productAmount\" style=\"width: 50px\"[min]=\"0\"></ion-input>\n      <ion-button type=\"button\" [color]=\"'success'\" (click)=\"productOrder.add()\">+</ion-button>\n    </ion-row>\n    {{productOrder.productAmount * productOrder.priceByEach | currency:'EUR'}}\n    <ion-button type=\"button\" (click)=\"addToCart()\">\n      <ion-icon name=\"bag-add-outline\"></ion-icon>\n    </ion-button>\n  </ion-grid>\n</ion-content>\n");
+/* harmony default export */ __webpack_exports__["default"] = ("<ion-content class=\"ion-padding\">\r\n  <ion-grid>\r\n    <ion-row class=\"ion-align-items-end\">\r\n      <ion-col size=\"3\">\r\n        <ion-img [src]=\"this.product.picture\"></ion-img>\r\n      </ion-col>\r\n      <ion-col size=\"9\">\r\n        <ion-text class=\"ion-padding\">\r\n          <h2 class=\"ion-no-margin\">\r\n            {{this.product.name}}\r\n            {{this.product.description}}\r\n          </h2>\r\n          <ion-button type=\"button\" *ngIf=\"isOwner\" [routerLink]=\"'/productForm/' + product.id\">\r\n            Modificar\r\n          </ion-button>\r\n        </ion-text>\r\n      </ion-col>\r\n    </ion-row>\r\n    <ion-row style=\"width: fit-content\">\r\n      <ion-button type=\"button\" [color]=\"'danger'\" (click)=\"productOrder.reduce()\">-</ion-button>\r\n      <ion-input type=\"number\" readonly=\"true\" [value]=\"productOrder.productAmount\" style=\"width: 50px\"[min]=\"0\"></ion-input>\r\n      <ion-button type=\"button\" [color]=\"'success'\" (click)=\"productOrder.add()\">+</ion-button>\r\n    </ion-row>\r\n    {{productOrder.productAmount * productOrder.priceByEach | currency:'EUR'}}\r\n    <ion-button type=\"button\" (click)=\"addToCart()\">\r\n      <ion-icon name=\"bag-add-outline\"></ion-icon>\r\n    </ion-button>\r\n  </ion-grid>\r\n</ion-content>\r\n");
 
 /***/ }),
 
@@ -2044,7 +2232,7 @@ EnumToArrayPipe = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"])([
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony default export */ __webpack_exports__["default"] = ("<ion-item>\n  <ion-label>\n    <div *ngFor=\"let product of order.orderedItems\"> {{product?.product?.name}} x {{product.productAmount}} </div>\n    <div>Precio final: {{finalPrice | currency:'EUR'}}</div>\n    <!-- <div *ngFor=\"let product of order.orderedItems\"> {{product.product.name}}</div>-->\n  </ion-label>\n</ion-item>\n");
+/* harmony default export */ __webpack_exports__["default"] = ("<ion-card>\r\n  <ion-card-header>\r\n    <ion-card-title *ngIf=\"isFarmer\">\r\n      Pedido de: {{orderUser.name}}\r\n    </ion-card-title>\r\n    <ion-card-subtitle>\r\n      Fecha: {{order.creationDate.seconds * 1000 | date:'yyyy/MM/dd h:mm:ss a'}}\r\n    </ion-card-subtitle>\r\n  </ion-card-header>\r\n  <ion-card-content style=\"padding-bottom: 0px !important;\">\r\n    <ion-label>\r\n      Productos pedidos:\r\n    </ion-label>\r\n    <ion-list>\r\n      <ion-item *ngFor=\"let product of order.orderedItems\"> {{product?.product?.name}} x {{product.productAmount}} </ion-item>\r\n      <!-- <div *ngFor=\"let product of order.orderedItems\"> {{product.product.name}}</div>-->\r\n    </ion-list>\r\n  </ion-card-content>\r\n  <ion-row>\r\n    <ion-col class=\"ion-padding-bottom\">\r\n      <div>Precio final: {{finalPrice | currency:'EUR'}}</div>\r\n\r\n      <div *ngIf=\"order.status == 'Preparado'\">✔️Pedido preparado | Recogida el DD/MM a partir de las HH:MM en UPV?</div>\r\n      <div *ngIf=\"order.status == 'Cancelado'\">❌️Pedido cancelado</div>\r\n      <div *ngIf=\"order.status == 'Entregado'\">📦 Pedido entregado</div>\r\n      <!-- Farmer Options -->\r\n      <div *ngIf=\"isFarmer\">\r\n        <ion-button *ngIf=\"order.status !== 'Preparado' && order.status !== 'Cancelado' && order.status !== 'Entregado'\" (click)=\"prepareOrder()\">Marcar como preparado</ion-button>\r\n        <ion-button *ngIf=\"order.status == 'Preparado'\" (click)=\"deliveredOrder()\">Marcar como entregado</ion-button>\r\n        <ion-button *ngIf=\"order.status !== 'Cancelado' && order.status !== 'Entregado'\" (click)=\"cancelOrder()\">Cancelar</ion-button>\r\n      </div>\r\n      <!-- User Options -->\r\n      <div *ngIf=\"!isFarmer\">\r\n        <ion-button *ngIf=\"order.status !== 'Cancelado' && order.status !=='Preparado' && order.status !== 'Entregado'\" (click)=\"cancelOrder()\">Cancelar</ion-button>\r\n      </div>\r\n    </ion-col>\r\n  </ion-row>\r\n</ion-card>\r\n");
 
 /***/ }),
 
@@ -2096,7 +2284,7 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony default export */ __webpack_exports__["default"] = ("<ion-content>\n  <ion-list>\n    <ion-list-header>\n      Productos:\n    </ion-list-header>\n\n    <ion-item *ngFor=\"let product of productList\">\n      <ion-avatar slot=\"start\">\n        <img [src]=\"product.picture\" [ngStyle]=\"!product.stock ? { '-webkit-filter': 'grayscale(100%)', 'filter': 'grayscale(100%)'} : {}\">\n      </ion-avatar>\n      <ion-label>\n        <h2>{{product.name}}</h2>\n        <h3>{{product.description}}</h3>\n      </ion-label>\n      <ion-button type=\"button\" [routerLink]=\"'/product/' + product.id\">\n        Abrir\n      </ion-button>\n    </ion-item>\n  </ion-list>\n</ion-content>\n");
+/* harmony default export */ __webpack_exports__["default"] = ("<ion-content>\r\n  <ion-list>\r\n    <ion-list-header>\r\n      Productos:\r\n    </ion-list-header>\r\n\r\n    <ion-item *ngFor=\"let product of productList\">\r\n      <!-- Vista si hay stock -->\r\n      <div *ngIf=\"product.stock\" [routerLink]=\"'/product/' + product.id\" style=\"width: 100%;\">\r\n        <ion-avatar slot=\"start\">\r\n          <img [src]=\"product.picture\" [ngStyle]=\"!product.stock ? { '-webkit-filter': 'grayscale(100%)', 'filter': 'grayscale(100%)'} : {}\">\r\n        </ion-avatar>\r\n        <ion-label>\r\n          <h2>{{product.name}}</h2>\r\n          <h3>{{product.description}}</h3>\r\n        </ion-label>\r\n        <ion-label *ngIf=\"!product.stock\" color=\"light\">Sin stock</ion-label>\r\n      </div>\r\n\r\n      <!-- Vista si no hay stock -->\r\n      <div *ngIf=\"!product.stock\" style=\"width: 100%;\">\r\n        <ion-avatar slot=\"start\">\r\n          <img [src]=\"product.picture\" [ngStyle]=\"{ '-webkit-filter': 'grayscale(100%)', 'filter': 'grayscale(100%)'}\">\r\n        </ion-avatar>\r\n        <ion-label>\r\n          <h2>{{product.name}}</h2>\r\n          <h3>{{product.description}}</h3>\r\n        </ion-label>\r\n        <ion-badge color=\"danger\" slot=\"end\">Sin stock</ion-badge>\r\n      </div>\r\n    </ion-item>\r\n  </ion-list>\r\n</ion-content>\r\n");
 
 /***/ }),
 
@@ -2219,7 +2407,7 @@ var CategoryEnum;
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony default export */ __webpack_exports__["default"] = ("<ion-item>\n  <ion-label>\n    {{product.product.name}} x{{product.productAmount}}\n  </ion-label>\n  <ion-button type=\"button\" [color]=\"'danger'\" (click)=\"product.reduce()\">-</ion-button>\n  <ion-button type=\"button\" [color]=\"'success'\" (click)=\"product.add()\">+</ion-button>\n  <ion-button (click)=\"removeFromCart()\">\n    <ion-icon name=\"trash-outline\"></ion-icon>\n  </ion-button>\n</ion-item>\n");
+/* harmony default export */ __webpack_exports__["default"] = ("<ion-item>\r\n  <ion-label>\r\n    {{product.product.name}} x{{product.productAmount}}\r\n  </ion-label>\r\n  <ion-button type=\"button\" [color]=\"'danger'\" (click)=\"product.reduce()\">-</ion-button>\r\n  <ion-button type=\"button\" [color]=\"'success'\" (click)=\"product.add()\">+</ion-button>\r\n  <ion-button (click)=\"removeFromCart()\">\r\n    <ion-icon name=\"trash-outline\"></ion-icon>\r\n  </ion-button>\r\n</ion-item>\r\n");
 
 /***/ }),
 
@@ -2241,6 +2429,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _models_order_order__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../models/order/order */ "ya8d");
 /* harmony import */ var _products_product_service__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../products/product.service */ "TYbz");
 /* harmony import */ var class_transformer__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! class-transformer */ "LGct");
+/* harmony import */ var _auth_auth_service_service__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../auth/auth-service.service */ "v1tz");
+/* harmony import */ var _models_statistics_stats__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../../models/statistics/stats */ "PcW2");
+
+
 
 
 
@@ -2250,16 +2442,16 @@ __webpack_require__.r(__webpack_exports__);
 
 
 let OrderService = class OrderService {
-    constructor(afAuth, firestore, storage, productService) {
+    constructor(afAuth, firestore, storage, productService, authService) {
         this.afAuth = afAuth;
         this.firestore = firestore;
         this.storage = storage;
         this.productService = productService;
+        this.authService = authService;
         this.orderCollection = this.firestore.collection('orders');
     }
     createOrderEntity(order) {
         const orderEntity = Object(class_transformer__WEBPACK_IMPORTED_MODULE_7__["classToPlain"])(order);
-        console.log(orderEntity);
         orderEntity._orderedItems.forEach(product => {
             delete product._product;
         });
@@ -2283,6 +2475,84 @@ let OrderService = class OrderService {
             });
         });
     }
+    loadAllOrdersOfCurrentUser() {
+        let orderList = [];
+        let orderCollection;
+        if (this.authService.getIsFarmer()) {
+            orderCollection = this.firestore.collection('orders', ref => ref.where('_ownerId', '==', this.authService.getCurrentUserId()));
+        }
+        else {
+            orderCollection = this.firestore.collection('orders', ref => ref.where('_userId', '==', this.authService.getCurrentUserId()));
+        }
+        return new Promise((resolve, reject) => {
+            orderCollection.valueChanges({ idField: '_id' }).subscribe(orderEntities => {
+                orderList = [];
+                orderEntities.forEach((orderEntity) => {
+                    const orderModel = new _models_order_order__WEBPACK_IMPORTED_MODULE_5__["Order"]().convertFromDTO(orderEntity);
+                    orderModel.orderedItems.forEach((product, index) => {
+                        this.productService.loadProductById(product.productId).then(value => {
+                            orderModel.orderedItems[index].product = value;
+                        });
+                    });
+                    orderList.push(orderModel);
+                });
+                resolve(orderList);
+            });
+        });
+    }
+    loadUserSalesRecord() {
+        const currentStats = new _models_statistics_stats__WEBPACK_IMPORTED_MODULE_9__["Stats"]();
+        return new Promise((resolve, reject) => {
+            this.loadAllOrdersOfCurrentUser().then(orderList => {
+                currentStats.totalOrders = orderList.length;
+                orderList.forEach(order => {
+                    order.orderedItems.forEach(product => {
+                        console.log(product);
+                        currentStats.totalSaleAmount += product.priceByEach * product.productAmount;
+                        let productStats = currentStats.productsOrdered.find(x => x.productId === product.productId);
+                        // Todo map product to get the id and name
+                        if (productStats) {
+                            productStats.productId = product.productId;
+                            productStats.productAmount += product.productAmount;
+                        }
+                        else {
+                            productStats = new _models_statistics_stats__WEBPACK_IMPORTED_MODULE_9__["StatsProductOrders"]();
+                            productStats.productId = product.productId;
+                            productStats.productAmount += product.productAmount;
+                            currentStats.productsOrdered.push(productStats);
+                        }
+                    });
+                });
+                currentStats.productsOrdered.forEach(value => {
+                    this.productService.loadProductById(value.productId).then(productEntity => {
+                        value.name = productEntity._name;
+                    });
+                });
+                resolve(currentStats);
+            });
+        });
+    }
+    cancelOrderById(orderId) {
+        return new Promise((resolve, reject) => {
+            this.orderCollection.doc(orderId).update({ _status: _models_order_order__WEBPACK_IMPORTED_MODULE_5__["OrderStatusEnum"].Cancelado }).then(r => {
+                resolve(true);
+            });
+        });
+    }
+    markOrderAsPreparedById(orderId) {
+        return new Promise((resolve, reject) => {
+            this.orderCollection.doc(orderId).update({ _status: _models_order_order__WEBPACK_IMPORTED_MODULE_5__["OrderStatusEnum"].Preparado }).then(r => {
+                resolve(true);
+            });
+        });
+    }
+    markOrderAsDeliveredById(orderId) {
+        return new Promise((resolve, reject) => {
+            this.orderCollection.doc(orderId).update({ _status: _models_order_order__WEBPACK_IMPORTED_MODULE_5__["OrderStatusEnum"].Entregado }).then(r => {
+                resolve(true);
+            });
+        });
+    }
     loadProductImage(imagePath) {
         return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, function* () {
             const ref = this.storage.ref(imagePath);
@@ -2298,7 +2568,8 @@ OrderService.ctorParameters = () => [
     { type: _angular_fire_auth__WEBPACK_IMPORTED_MODULE_2__["AngularFireAuth"] },
     { type: _angular_fire_firestore__WEBPACK_IMPORTED_MODULE_3__["AngularFirestore"] },
     { type: _angular_fire_storage__WEBPACK_IMPORTED_MODULE_4__["AngularFireStorage"] },
-    { type: _products_product_service__WEBPACK_IMPORTED_MODULE_6__["ProductService"] }
+    { type: _products_product_service__WEBPACK_IMPORTED_MODULE_6__["ProductService"] },
+    { type: _auth_auth_service_service__WEBPACK_IMPORTED_MODULE_8__["AuthServiceService"] }
 ];
 OrderService = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"])([
     Object(_angular_core__WEBPACK_IMPORTED_MODULE_1__["Injectable"])({
@@ -2320,6 +2591,75 @@ OrderService = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"])([
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony default export */ __webpack_exports__["default"] = ("\n/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IiIsImZpbGUiOiJyZWdpc3Rlci11c2VyLmNvbXBvbmVudC5zYXNzIn0= */");
+
+/***/ }),
+
+/***/ "v1tz":
+/*!***************************************************!*\
+  !*** ./src/services/auth/auth-service.service.ts ***!
+  \***************************************************/
+/*! exports provided: AuthServiceService */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "AuthServiceService", function() { return AuthServiceService; });
+/* harmony import */ var tslib__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! tslib */ "mrSG");
+/* harmony import */ var _angular_core__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @angular/core */ "fXoL");
+/* harmony import */ var _angular_fire_auth__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @angular/fire/auth */ "UbJi");
+/* harmony import */ var _angular_router__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @angular/router */ "tyNb");
+/* harmony import */ var _angular_fire_firestore__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @angular/fire/firestore */ "I/3d");
+/* harmony import */ var _models_user_user_model__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../models/user/user.model */ "aUIA");
+/* harmony import */ var _models_user_user_roles_enum__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../../models/user/user-roles.enum */ "zOgT");
+
+
+
+
+
+
+
+let AuthServiceService = class AuthServiceService {
+    constructor(afAuth, router, firestore) {
+        this.afAuth = afAuth;
+        this.router = router;
+        this.firestore = firestore;
+        this.afAuth.authState.subscribe(user => {
+            if (user) {
+                this.userId = user.uid;
+                this.isLogged = true;
+                this.userCollection = firestore.doc('profiles/' + user.uid);
+                this.userCollection.valueChanges().subscribe(userData => {
+                    console.log(userData);
+                    const realUser = new _models_user_user_model__WEBPACK_IMPORTED_MODULE_5__["User"]().convertFromDTO(userData);
+                    this.isFarmer = realUser.role === _models_user_user_roles_enum__WEBPACK_IMPORTED_MODULE_6__["UserRoles"].PRODUCER;
+                });
+            }
+            else {
+                this.isLogged = false;
+            }
+        });
+    }
+    getCurrentUserId() {
+        return this.userId ? this.userId : 'test';
+    }
+    getIsFarmer() {
+        return this.isFarmer;
+    }
+    ngOnDestroy() {
+    }
+};
+AuthServiceService.ctorParameters = () => [
+    { type: _angular_fire_auth__WEBPACK_IMPORTED_MODULE_2__["AngularFireAuth"] },
+    { type: _angular_router__WEBPACK_IMPORTED_MODULE_3__["Router"] },
+    { type: _angular_fire_firestore__WEBPACK_IMPORTED_MODULE_4__["AngularFirestore"] }
+];
+AuthServiceService = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"])([
+    Object(_angular_core__WEBPACK_IMPORTED_MODULE_1__["Injectable"])({
+        providedIn: 'root'
+    })
+], AuthServiceService);
+
+
 
 /***/ }),
 
@@ -2426,6 +2766,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _views_profile_list_profile_list_view__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../views/profile-list/profile-list.view */ "50wC");
 /* harmony import */ var _views_cart_cart_view__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../views/cart/cart.view */ "IwNu");
 /* harmony import */ var _views_order_list_order_list_view__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../views/order-list/order-list.view */ "DPVA");
+/* harmony import */ var _views_statistics_statistics_view__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../views/statistics/statistics.view */ "E9lE");
+
 
 
 
@@ -2451,6 +2793,8 @@ const routes = [
     { path: 'product/:id', component: _views_product_product_view__WEBPACK_IMPORTED_MODULE_6__["ProductView"] },
     { path: 'cart', component: _views_cart_cart_view__WEBPACK_IMPORTED_MODULE_9__["CartView"] },
     { path: 'orders', component: _views_order_list_order_list_view__WEBPACK_IMPORTED_MODULE_10__["OrderListView"] },
+    { path: 'statistics', component: _views_statistics_statistics_view__WEBPACK_IMPORTED_MODULE_11__["StatisticsView"] },
+    { path: 'statistics/:id', component: _views_statistics_statistics_view__WEBPACK_IMPORTED_MODULE_11__["StatisticsView"] },
 ];
 let AppRoutingModule = class AppRoutingModule {
 };
@@ -2648,7 +2992,7 @@ ProductFormComponent = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"])(
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony default export */ __webpack_exports__["default"] = ("<ion-content>\n  <app-order-item *ngFor=\"let order of orderList\" [order]=\"order\"></app-order-item>\n</ion-content>\n\n");
+/* harmony default export */ __webpack_exports__["default"] = ("<ion-content>\r\n  <app-order-item *ngFor=\"let order of orderList\" [order]=\"order\"></app-order-item>\r\n</ion-content>\r\n\r\n");
 
 /***/ }),
 
