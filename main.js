@@ -562,6 +562,7 @@ let ProfileView = class ProfileView {
                         this.userCollection = firestore.doc('profiles/' + this.pathId);
                         this.userCollection.valueChanges({ idField: '_id' }).subscribe(user => {
                             this.user = this.user.convertFromDTO(user);
+                            this.isFarmer = this.user.role === _models_user_user_roles_enum__WEBPACK_IMPORTED_MODULE_9__["UserRoles"].PRODUCER;
                             const ref = this.storage.ref(this.user.picture);
                             ref.getDownloadURL().subscribe(url => {
                                 this.profileImage = url;
@@ -1738,7 +1739,7 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony default export */ __webpack_exports__["default"] = ("<ion-content class=\"ion-padding\">\r\n  <ion-grid>\r\n    <ion-row class=\"ion-align-items-end\">\r\n        <ion-avatar>\r\n          <img [src]=\"this.profileImage\">\r\n        </ion-avatar>\r\n        <ion-text class=\"ion-padding\">\r\n          <h2 class=\"ion-no-margin\">\r\n            {{this.user.name}}\r\n          </h2>\r\n        </ion-text>\r\n      <ion-button [color]=\"'danger'\" (click)=\"logout()\" *ngIf=\"loggedId\"\r\n                  [routerLink]=\"'/login'\" type=\"button\" class=\"btn btn-danger\">Cerrar sesión</ion-button>\r\n      <ion-button [routerLink]=\"['/products', 0, this.user.id]\">Productos</ion-button>\r\n    </ion-row>\r\n  </ion-grid>\r\n  <div *ngIf=\"loggedId\">\r\n    <ion-list href=\"mailto:agrari.food@gmail.com\" (click)=\"window.open('mailto:agrari.food@gmail.com')\">\r\n      <ion-item>\r\n        <ion-icon name=\"help-circle-outline\" slot=\"start\"></ion-icon>\r\n        <ion-label>\r\n          ¿Necesitas ayuda? Mandanos un email a:\r\n          <br>\r\n          agrari.food@gmail.com\r\n        </ion-label>\r\n      </ion-item>\r\n    </ion-list>\r\n  </div>\r\n</ion-content>\r\n\r\n");
+/* harmony default export */ __webpack_exports__["default"] = ("<ion-content class=\"ion-padding\">\r\n  <ion-grid>\r\n    <ion-row class=\"ion-align-items-end\">\r\n        <ion-avatar>\r\n          <img [src]=\"this.profileImage\">\r\n        </ion-avatar>\r\n        <ion-text class=\"ion-padding\">\r\n          <h2 class=\"ion-no-margin\">\r\n            {{this.user.name}}\r\n          </h2>\r\n        </ion-text>\r\n      <ion-button [color]=\"'danger'\" (click)=\"logout()\" *ngIf=\"loggedId\"\r\n                  [routerLink]=\"'/login'\" type=\"button\" class=\"btn btn-danger\">Cerrar sesión</ion-button>\r\n      <ion-button *ngIf=\"isFarmer\" [routerLink]=\"['/products', 0, this.user.id]\">Productos</ion-button>\r\n    </ion-row>\r\n  </ion-grid>\r\n  <div *ngIf=\"loggedId\">\r\n    <ion-list href=\"mailto:agrari.food@gmail.com\" (click)=\"window.open('mailto:agrari.food@gmail.com')\">\r\n      <ion-item>\r\n        <ion-icon name=\"help-circle-outline\" slot=\"start\"></ion-icon>\r\n        <ion-label>\r\n          ¿Necesitas ayuda? Mandanos un email a:\r\n          <br>\r\n          agrari.food@gmail.com\r\n        </ion-label>\r\n      </ion-item>\r\n    </ion-list>\r\n  </div>\r\n</ion-content>\r\n\r\n");
 
 /***/ }),
 
