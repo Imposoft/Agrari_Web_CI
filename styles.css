@@ -63,6 +63,8 @@
   --ion-color-light-contrast-rgb: 0,0,0;
   --ion-color-light-shade: #d6d6d6;
   --ion-color-light-tint: #f4f4f4;
+  /** Fuente web **/
+  --ion-font-family: "Assistant";
 }
 /*@media (prefers-color-scheme: dark) {
   /*
@@ -1253,6 +1255,14 @@ sub {
 }
 .ion-align-items-baseline {
   align-items: baseline !important;
+}
+@font-face {
+  font-family: "Montserrat";
+  src: url('Montserrat-Regular.ttf');
+}
+@font-face {
+  font-family: "Assistant";
+  src: url('Assistant-Regular.ttf');
 }
 
 /*# sourceMappingURL=styles.css.map*/
