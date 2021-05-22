@@ -1274,8 +1274,7 @@ ion-content.background {
   padding-top: 20px;
 }
 .image-zoom .modal-wrapper {
-  height: 70vh;
-  max-height: 80vh;
+  max-height: 100vw;
   max-width: 100vw;
   position: absolute;
   display: block;
